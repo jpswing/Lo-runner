@@ -39,8 +39,11 @@ int traceLoop(struct Runobj *runobj, struct Result *rst, pid_t pid) {
         if (wait4(pid, &status, WSTOPPED, &ru) == -1)
             RAISE_RUN("wait4 [WSTOPPED] failure");
 
-        if (WIFEXITED(status))
+        if (WIFEXITED(status)) {
+	    if (WEXITSTATUS(status) != 0)
+                rst->judge_result = RE;
             break;
+	}
         else if (WSTOPSIG(status) != SIGTRAP) {
             ptrace(PTRACE_KILL, pid, NULL, NULL);
             waitpid(pid, NULL, 0);
@@ -157,7 +160,10 @@ int waitExit(struct Runobj *runobj, struct Result *rst, pid_t pid) {
         }
         rst->re_signum = WTERMSIG(status);
     } else {
-        if (rst->time_used > runobj->time_limit)
+	assert(WIFEXITED(status));
+	if (WEXITSTATUS(status) != 0)
+	    rst->judge_result = RE;
+	else if (rst->time_used > runobj->time_limit)
             rst->judge_result = TLE;
         else if (rst->memory_used > runobj->memory_limit)
             rst->judge_result = MLE;
