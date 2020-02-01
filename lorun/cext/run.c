@@ -39,8 +39,11 @@ int traceLoop(struct Runobj *runobj, struct Result *rst, pid_t pid) {
         if (wait4(pid, &status, WSTOPPED, &ru) == -1)
             RAISE_RUN("wait4 [WSTOPPED] failure");
 
-        if (WIFEXITED(status))
+        if (WIFEXITED(status)) {
+	    if (WEXITSTATUS(status) != 0)
+                rst->judge_result = RE;
             break;
+	}
         else if (WSTOPSIG(status) != SIGTRAP) {
             ptrace(PTRACE_KILL, pid, NULL, NULL);
             waitpid(pid, NULL, 0);
@@ -157,7 +160,10 @@ int waitExit(struct Runobj *runobj, struct Result *rst, pid_t pid) {
         }
         rst->re_signum = WTERMSIG(status);
     } else {
-        if (rst->time_used > runobj->time_limit)
+	assert(WIFEXITED(status));
+	if (WEXITSTATUS(status) != 0)
+	    rst->judge_result = RE;
+	else if (rst->time_used > runobj->time_limit)
             rst->judge_result = TLE;
         else if (rst->memory_used > runobj->memory_limit)
             rst->judge_result = MLE;
@@ -189,7 +195,13 @@ int runit(struct Runobj *runobj, struct Result *rst) {
             int r = write(fd_err[1],err,strlen(err));\
             _exit(r);\
         }
-
+        if(MAX_OUTPUT > 0)
+        {
+            struct rlimit max_output_size;
+            max_output_size.rlim_cur = max_output_size.rlim_max = MAX_OUTPUT;
+            if (setrlimit(RLIMIT_FSIZE,&max_output_size) != 0)
+                RAISE_EXIT("setrlimit max output failure")
+        }
         if (runobj->fd_in != -1)
             if (dup2(runobj->fd_in, 0) == -1)
                 RAISE_EXIT("dup2 stdin failure!")

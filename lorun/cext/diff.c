@@ -41,7 +41,7 @@ int checkDiff(int rightout_fd, int userout_fd, int *result) {
     if (userout_len == -1 || rightout_len == -1)
         RAISE1("lseek failure");
 
-    if (userout_len >= MAX_OUTPUT)
+    if (userout_len >= MAX_OUTPUT - 5)
         RETURN(OLE);
 
     lseek(userout_fd, 0, SEEK_SET);
