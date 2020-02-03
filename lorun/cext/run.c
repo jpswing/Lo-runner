@@ -195,13 +195,7 @@ int runit(struct Runobj *runobj, struct Result *rst) {
             int r = write(fd_err[1],err,strlen(err));\
             _exit(r);\
         }
-        if(MAX_OUTPUT > 0)
-        {
-            struct rlimit max_output_size;
-            max_output_size.rlim_cur = max_output_size.rlim_max = MAX_OUTPUT;
-            if (setrlimit(RLIMIT_FSIZE,&max_output_size) != 0)
-                RAISE_EXIT("setrlimit max output failure")
-        }
+        
         if (runobj->fd_in != -1)
             if (dup2(runobj->fd_in, 0) == -1)
                 RAISE_EXIT("dup2 stdin failure!")
