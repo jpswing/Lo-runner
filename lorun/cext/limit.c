@@ -26,7 +26,12 @@ int setResLimit(struct Runobj *runobj) {
 #define RAISE_EXIT(err) {last_limit_err = err;return -1;}
     struct rlimit rl;
     /*struct itimerval p_realt;*/
-
+    if(MAX_OUTPUT > 0){
+        struct rlimit max_output_size;
+        max_output_size.rlim_cur = max_output_size.rlim_max = MAX_OUTPUT;
+        if(setrlimit(RLIMIT_FSIZE,&max_output_size) != 0)
+            RAISE_EXIT("setrlimit max output failure")
+    }
     rl.rlim_cur = runobj->time_limit / 1000 + 1;
     if (runobj->time_limit % 1000 > 800) {
         rl.rlim_cur += 1;
