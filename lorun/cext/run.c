@@ -136,11 +136,14 @@ int waitExit(struct Runobj *runobj, struct Result *rst, pid_t pid) {
     if (wait4(pid, &status, 0, &ru) == -1)
         RAISE_RUN("wait4 failure");
 
+
     rst->time_used = ru.ru_utime.tv_sec * 1000
             + ru.ru_utime.tv_usec / 1000
             + ru.ru_stime.tv_sec * 1000
             + ru.ru_stime.tv_usec / 1000;
     rst->memory_used = ru.ru_maxrss;
+
+
 
     if (WIFSIGNALED(status)) {
         switch (WTERMSIG(status)) {
@@ -153,6 +156,9 @@ int waitExit(struct Runobj *runobj, struct Result *rst, pid_t pid) {
             case SIGALRM:
             case SIGXCPU:
                 rst->judge_result = TLE;
+                break;
+            case SIGXFSZ:
+                rst->judge_result = OLE;
                 break;
             default:
                 rst->judge_result = RE;
@@ -171,6 +177,12 @@ int waitExit(struct Runobj *runobj, struct Result *rst, pid_t pid) {
             rst->judge_result = AC;
     }
 
+    off_t userout_len;
+    userout_len = lseek(runobj->fd_out, 0, SEEK_END);
+    if (userout_len >= MAX_OUTPUT - 5)
+            rst->judge_result = OLE;
+
+
     return 0;
 }
 
@@ -187,8 +199,7 @@ int runit(struct Runobj *runobj, struct Result *rst) {
         close(fd_err[1]);
         RAISE1("run : vfork failure");
     }
-
-    if (pid == 0) {
+    else if (pid == 0) {
         close(fd_err[0]);
 
 #define RAISE_EXIT(err) {\
@@ -234,6 +245,7 @@ int runit(struct Runobj *runobj, struct Result *rst) {
             RAISE(errbuffer);
             return -1;
         }
+
 
         if (runobj->trace)
             r = traceLoop(runobj, rst, pid);
