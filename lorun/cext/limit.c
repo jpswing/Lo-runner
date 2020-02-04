@@ -29,7 +29,7 @@ int setResLimit(struct Runobj *runobj) {
     if(MAX_OUTPUT > 0){
         struct rlimit max_output_size;
         max_output_size.rlim_cur = max_output_size.rlim_max = MAX_OUTPUT;
-        if(setrlimit(RLIMIT_FSIZE,&max_output_size) != 0)
+        if(setrlimit(RLIMIT_FSIZE,&max_output_size))
             RAISE_EXIT("setrlimit max output failure")
     }
     rl.rlim_cur = runobj->time_limit / 1000 + 1;
