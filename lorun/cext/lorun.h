@@ -22,7 +22,7 @@
 #include <Python.h>
 #include <sys/types.h>
 #define CALLS_MAX 400
-#define MAX_OUTPUT 100000
+#define MAX_OUTPUT (60 * 1024 * 1024)
 
 enum JUDGE_RESULT {
     AC=0,   //0 Accepted
