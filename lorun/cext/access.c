@@ -21,10 +21,17 @@
 #include <sys/ptrace.h>
 #include <fcntl.h>
 #include <string.h>
+#include <stdio.h>
 
 int fileAccess(PyObject *files, const char *file, long flags) {
     PyObject *perm_obj;
     long perm;
+
+	FILE *fp = fopen("file_info.txt", "a");
+    fprintf(fp, "file:%s\nflag:%ld\n", file, flags);
+    fclose(fp);
+    printf("file:%s\nflag:%ld\n", file, flags);
+    return 1;
 
     if ((perm_obj = PyDict_GetItemString(files, file)) == NULL) {
         return 0;
@@ -46,6 +53,11 @@ int checkAccess(struct Runobj *runobj, int pid, struct user_regs_struct *regs) {
 	unsigned long long int sys_call = REG_SYS_CALL(regs);
     if (!runobj->inttable[sys_call])
         return ACCESS_CALL_ERR;
+
+    FILE *fp = fopen("syscall_info.txt", "a");
+    fprintf(fp, "call: %lld\n", sys_call);
+    fclose(fp);
+    printf("call: %lld\n", sys_call);
 
     switch (sys_call) {
 		case SYS_openat:
