@@ -30,10 +30,12 @@
     #define REG_SYS_CALL(x) ((x)->orig_rax)
     #define REG_ARG_1(x) ((x)->rdi)
     #define REG_ARG_2(x) ((x)->rsi)
+	#define REG_ARG_3(x) ((x)->rdx)
 #else
     #define REG_SYS_CALL(x) ((x)->orig_eax)
     #define REG_ARG_1(x) ((x)->ebx)
     #define REG_ARG_2(x) ((x)->ecx)
+	#define REG_ARG_3(x) ((x)->edx)
 #endif
 
 int checkAccess(struct Runobj *runobj, int pid, struct user_regs_struct *regs);

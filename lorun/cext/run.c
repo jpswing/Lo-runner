@@ -40,19 +40,13 @@ int traceLoop(struct Runobj *runobj, struct Result *rst, pid_t pid) {
             RAISE_RUN("wait4 [WSTOPPED] failure");
 
         if (WIFEXITED(status)) {
-	    if (WEXITSTATUS(status) != 0)
-                rst->judge_result = RE;
-            break;
-	}
+			if (WEXITSTATUS(status) != 0)
+				rst->judge_result = RE;
+			break;
+		}
         else if (WSTOPSIG(status) != SIGTRAP) {
             ptrace(PTRACE_KILL, pid, NULL, NULL);
             waitpid(pid, NULL, 0);
-
-            rst->time_used = ru.ru_utime.tv_sec * 1000
-                    + ru.ru_utime.tv_usec / 1000
-                    + ru.ru_stime.tv_sec * 1000
-                    + ru.ru_stime.tv_usec / 1000;
-            rst->memory_used = ru.ru_maxrss;
 
             switch (WSTOPSIG(status)) {
                 case SIGSEGV:
@@ -65,6 +59,9 @@ int traceLoop(struct Runobj *runobj, struct Result *rst, pid_t pid) {
                 case SIGXCPU:
                     rst->judge_result = TLE;
                     break;
+				case SIGXFSZ:
+					rst->judge_result = OLE;
+					break;
                 default:
                     rst->judge_result = RE;
                     break;
@@ -85,7 +82,7 @@ int traceLoop(struct Runobj *runobj, struct Result *rst, pid_t pid) {
         if (incall) {
             int ret = checkAccess(runobj, pid, &regs);
             if (ret != ACCESS_OK) {
-                ptrace(PTRACE_KILL, pid, NULL, NULL);
+                ptrace(PTRACE_KILL, pid, NULL, NULL);  // TODO maybe we should use `kill` to kill the child process.
                 waitpid(pid, NULL, 0);
 
                 rst->time_used = ru.ru_utime.tv_sec * 1000
@@ -123,8 +120,13 @@ int traceLoop(struct Runobj *runobj, struct Result *rst, pid_t pid) {
         rst->judge_result = TLE;
     else if (rst->memory_used > runobj->memory_limit)
         rst->judge_result = MLE;
-    else
-        rst->judge_result = AC;
+    else {
+		off_t userout_len;
+		userout_len = lseek(runobj->fd_out, 0, SEEK_END);
+		if (userout_len >= MAX_OUTPUT - 5)
+			rst->judge_result = OLE;
+        else rst->judge_result = AC;
+	}
 
     return 0;
 }
@@ -166,10 +168,10 @@ int waitExit(struct Runobj *runobj, struct Result *rst, pid_t pid) {
         }
         rst->re_signum = WTERMSIG(status);
     } else {
-	assert(WIFEXITED(status));
-	if (WEXITSTATUS(status) != 0)
-	    rst->judge_result = RE;
-	else if (rst->time_used > runobj->time_limit)
+		assert(WIFEXITED(status));
+		if (WEXITSTATUS(status) != 0)
+			rst->judge_result = RE;
+		else if (rst->time_used > runobj->time_limit)
             rst->judge_result = TLE;
         else if (rst->memory_used > runobj->memory_limit)
             rst->judge_result = MLE;
@@ -180,7 +182,7 @@ int waitExit(struct Runobj *runobj, struct Result *rst, pid_t pid) {
     off_t userout_len;
     userout_len = lseek(runobj->fd_out, 0, SEEK_END);
     if (userout_len >= MAX_OUTPUT - 5)
-            rst->judge_result = OLE;
+		rst->judge_result = OLE;
 
 
     return 0;

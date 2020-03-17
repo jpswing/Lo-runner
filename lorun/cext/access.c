@@ -43,19 +43,22 @@ int fileAccess(PyObject *files, const char *file, long flags) {
 
 static long file_temp[100];
 int checkAccess(struct Runobj *runobj, int pid, struct user_regs_struct *regs) {
-    if (!runobj->inttable[REG_SYS_CALL(regs)])
+	unsigned long long int sys_call = REG_SYS_CALL(regs);
+    if (!runobj->inttable[sys_call])
         return ACCESS_CALL_ERR;
 
-    switch (REG_SYS_CALL(regs)) {
+    switch (sys_call) {
+		case SYS_openat:
         case SYS_open: {
             int i, j;
 
             for (i = 0; i < 100; i++) {
                 const char* test;
                 long t = ptrace(PTRACE_PEEKDATA, pid,
-                    REG_ARG_1(regs) + i * sizeof(long), NULL);
+                    (sys_call == SYS_open ? REG_ARG_1(regs) : REG_ARG_2(regs)) + i * sizeof(long), NULL);
                 file_temp[i] = t;
                 test = (const char*) &file_temp[i];
+				// TODO maybe we can use `#define DETECTNULL(X) (((X) - 0x01010101) & ~(X) & 0x80808080)` here:
                 for (j = 0; j < sizeof(long); j++) {
                     if (!test[j]) {
                         goto l_cont;
@@ -65,7 +68,7 @@ int checkAccess(struct Runobj *runobj, int pid, struct user_regs_struct *regs) {
             l_cont: file_temp[99] = 0;
 
             if (fileAccess(runobj->files, (const char*)file_temp,
-                    REG_ARG_2(regs))) {
+                    (sys_call == SYS_open ? REG_ARG_2(regs) : REG_ARG_3(regs)))) {
                 return ACCESS_OK;
             }
 
