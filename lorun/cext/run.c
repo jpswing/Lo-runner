@@ -52,7 +52,7 @@ int traceLoop(struct Runobj *runobj, struct Result *rst, pid_t pid) {
 
             switch (WSTOPSIG(status)) {
                 case SIGSEGV:
-                    if (rst->memory_used > runobj->memory_limit)
+                    if (rst->memory_used > runobj->memory_limit && runobj->memory_limit != java_memory_limit_flag)
                         rst->judge_result = MLE;
                     else
                         rst->judge_result = RE;
@@ -140,16 +140,19 @@ int waitExit(struct Runobj *runobj, struct Result *rst, pid_t pid) {
     if (wait4(pid, &status, 0, &ru) == -1)
         RAISE_RUN("wait4 failure");
 
+
     rst->time_used = ru.ru_utime.tv_sec * 1000
             + ru.ru_utime.tv_usec / 1000
             + ru.ru_stime.tv_sec * 1000
             + ru.ru_stime.tv_usec / 1000;
     rst->memory_used = ru.ru_maxrss;
 
+
+
     if (WIFSIGNALED(status)) {
         switch (WTERMSIG(status)) {
             case SIGSEGV:
-                if (rst->memory_used > runobj->memory_limit)
+                if (rst->memory_used > runobj->memory_limit && runobj->memory_limit != java_memory_limit_flag)
                     rst->judge_result = MLE;
                 else
                     rst->judge_result = RE;
@@ -183,6 +186,8 @@ int waitExit(struct Runobj *runobj, struct Result *rst, pid_t pid) {
     userout_len = lseek(runobj->fd_out, 0, SEEK_END);
     if (userout_len >= MAX_OUTPUT - 5)
 		rst->judge_result = OLE;
+
+
 
     return 0;
 }
@@ -232,6 +237,7 @@ int runit(struct Runobj *runobj, struct Result *rst) {
                 RAISE_EXIT("TRACEME failure")
 
         execvp(runobj->args[0], (char * const *) runobj->args);
+
         RAISE_EXIT("execvp failure")
     } else {
         int r;
