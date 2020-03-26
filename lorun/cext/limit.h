@@ -23,4 +23,5 @@
 
 int setResLimit(struct Runobj *runobj);
 extern const char *last_limit_err;
+extern const int java_memory_limit_flag;
 #endif
