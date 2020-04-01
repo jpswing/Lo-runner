@@ -24,18 +24,24 @@
 
 int fileAccess(PyObject *files, const char *file, long flags) {
     PyObject *perm_obj;
-    long perm;
+    long perm = -1;
 
-    if ((perm_obj = PyDict_GetItemString(files, file)) == NULL) {
-        return 0;
-    }
+    perm_obj = PyDict_GetItemString(files, file);
     //printf("%s:%d\n",file,flags);
+    if (perm_obj != NULL) {
     #ifdef IS_PY3
-    perm = PyLong_AsLong(perm_obj);
+        perm = PyLong_AsLong(perm_obj);
     #else
-    perm = PyInt_AsLong(perm_obj);
+        perm = PyInt_AsLong(perm_obj);
     #endif
+    }
     if (perm == flags)
+        return 1;
+
+    if ((flags & O_WRONLY) || (flags & O_RDWR))
+        return 0;
+
+    if (PyDict_GetItemString(files, "*") != NULL)
         return 1;
 
     return 0;
@@ -43,12 +49,12 @@ int fileAccess(PyObject *files, const char *file, long flags) {
 
 static long file_temp[100];
 int checkAccess(struct Runobj *runobj, int pid, struct user_regs_struct *regs) {
-	unsigned long long int sys_call = REG_SYS_CALL(regs);
+    unsigned long long int sys_call = REG_SYS_CALL(regs);
     if (!runobj->inttable[sys_call])
         return ACCESS_CALL_ERR;
 
     switch (sys_call) {
-		case SYS_openat:
+        case SYS_openat:
         case SYS_open: {
             int i, j;
 
@@ -58,7 +64,7 @@ int checkAccess(struct Runobj *runobj, int pid, struct user_regs_struct *regs) {
                     (sys_call == SYS_open ? REG_ARG_1(regs) : REG_ARG_2(regs)) + i * sizeof(long), NULL);
                 file_temp[i] = t;
                 test = (const char*) &file_temp[i];
-				// TODO maybe we can use `#define DETECTNULL(X) (((X) - 0x01010101) & ~(X) & 0x80808080)` here:
+                // TODO maybe we can use `#define DETECTNULL(X) (((X) - 0x01010101) & ~(X) & 0x80808080)` here:
                 for (j = 0; j < sizeof(long); j++) {
                     if (!test[j]) {
                         goto l_cont;

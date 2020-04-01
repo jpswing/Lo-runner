@@ -42,10 +42,10 @@ int traceLoop(struct Runobj *runobj, struct Result *rst, pid_t pid) {
             RAISE_RUN("wait4 [WSTOPPED] failure");
 
         if (WIFEXITED(status)) {
-			if (WEXITSTATUS(status) != 0)
-				rst->judge_result = RE;
-			break;
-		}
+            if (WEXITSTATUS(status) != 0)
+                rst->judge_result = RE;
+            break;
+        }
         else if (WSTOPSIG(status) != SIGTRAP) {
             ptrace(PTRACE_KILL, pid, NULL, NULL);
             waitpid(pid, NULL, 0);
@@ -61,9 +61,9 @@ int traceLoop(struct Runobj *runobj, struct Result *rst, pid_t pid) {
                 case SIGXCPU:
                     rst->judge_result = TLE;
                     break;
-				case SIGXFSZ:
-					rst->judge_result = OLE;
-					break;
+                case SIGXFSZ:
+                    rst->judge_result = OLE;
+                    break;
                 default:
                     rst->judge_result = RE;
                     break;
@@ -123,12 +123,12 @@ int traceLoop(struct Runobj *runobj, struct Result *rst, pid_t pid) {
     else if (rst->memory_used > runobj->memory_limit && runobj->memory_limit != java_memory_limit_flag)
         rst->judge_result = MLE;
     else {
-		off_t userout_len;
-		userout_len = lseek(runobj->fd_out, 0, SEEK_END);
-		if (userout_len >= MAX_OUTPUT - 5)
-			rst->judge_result = OLE;
+        off_t userout_len;
+        userout_len = lseek(runobj->fd_out, 0, SEEK_END);
+        if (userout_len >= MAX_OUTPUT - 5)
+            rst->judge_result = OLE;
         else rst->judge_result = AC;
-	}
+    }
 
     return 0;
 }
@@ -170,10 +170,10 @@ int waitExit(struct Runobj *runobj, struct Result *rst, pid_t pid) {
         }
         rst->re_signum = WTERMSIG(status);
     } else {
-		assert(WIFEXITED(status));
-		if (WEXITSTATUS(status) != 0)
-			rst->judge_result = RE;
-		else if (rst->time_used > runobj->time_limit)
+        assert(WIFEXITED(status));
+        if (WEXITSTATUS(status) != 0)
+            rst->judge_result = RE;
+        else if (rst->time_used > runobj->time_limit)
 
             rst->judge_result = TLE;
         else if (rst->memory_used > runobj->memory_limit && runobj->memory_limit != java_memory_limit_flag)
@@ -185,7 +185,7 @@ int waitExit(struct Runobj *runobj, struct Result *rst, pid_t pid) {
     off_t userout_len;
     userout_len = lseek(runobj->fd_out, 0, SEEK_END);
     if (userout_len >= MAX_OUTPUT - 5)
-		rst->judge_result = OLE;
+        rst->judge_result = OLE;
 
 
 

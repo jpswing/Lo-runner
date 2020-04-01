@@ -124,9 +124,9 @@ PyObject* check(PyObject *self, PyObject *args)
 #define check_description "check(right_fd, userout_fd)\n"
 
 static PyMethodDef lorun_methods[] = {
-	{"run", run, METH_VARARGS, run_description},
-	{"check", check, METH_VARARGS, check_description},
-	{NULL, NULL, 0, NULL}
+    {"run", run, METH_VARARGS, run_description},
+    {"check", check, METH_VARARGS, check_description},
+    {NULL, NULL, 0, NULL}
 };
 
 

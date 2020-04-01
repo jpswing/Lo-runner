@@ -38,11 +38,11 @@ enum JUDGE_RESULT {
 
 struct Result {
     int judge_result; //JUDGE_RESULT
-    int time_used, memory_used;
-    int re_signum;
-    int re_call;
+    long time_used, memory_used;
+    long re_signum;
+    long re_call;
     const char* re_file;
-    int re_file_flag;
+    long re_file_flag;
 };
 
 struct Runobj {
