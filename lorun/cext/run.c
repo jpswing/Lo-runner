@@ -91,8 +91,7 @@ int traceLoop(struct Runobj *runobj, struct Result *rst, pid_t pid) {
                         + ru.ru_utime.tv_usec / 1000
                         + ru.ru_stime.tv_sec * 1000
                         + ru.ru_stime.tv_usec / 1000;
-                rst->memory_used = ru.ru_maxrss
-                        * (sysconf(_SC_PAGESIZE) / 1024);
+                rst->memory_used = ru.ru_maxrss;
 
                 rst->judge_result = RE;
                 if (ret == ACCESS_CALL_ERR) {
