@@ -127,7 +127,6 @@ int traceLoop(struct Runobj *runobj, struct Result *rst, pid_t pid) {
         userout_len = lseek(runobj->fd_out, 0, SEEK_END);
         if (userout_len >= MAX_OUTPUT - 5)
             rst->judge_result = OLE;
-        else rst->judge_result = AC;
     }
 
     return 0;
@@ -146,7 +145,6 @@ int waitExit(struct Runobj *runobj, struct Result *rst, pid_t pid) {
             + ru.ru_stime.tv_sec * 1000
             + ru.ru_stime.tv_usec / 1000;
     rst->memory_used = ru.ru_maxrss;
-
 
 
     if (WIFSIGNALED(status)) {
@@ -174,7 +172,6 @@ int waitExit(struct Runobj *runobj, struct Result *rst, pid_t pid) {
         if (WEXITSTATUS(status) != 0)
             rst->judge_result = RE;
         else if (rst->time_used > runobj->time_limit)
-
             rst->judge_result = TLE;
         else if (rst->memory_used > runobj->memory_limit && runobj->memory_limit != java_memory_limit_flag)
             rst->judge_result = MLE;
@@ -186,8 +183,6 @@ int waitExit(struct Runobj *runobj, struct Result *rst, pid_t pid) {
     userout_len = lseek(runobj->fd_out, 0, SEEK_END);
     if (userout_len >= MAX_OUTPUT - 5)
         rst->judge_result = OLE;
-
-
 
     return 0;
 }
